@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Paleta MediPet System — valores HEX del spec convertidos a HSL para
+  que shadcn/ui y Tailwind puedan variarlos por tema (--radix-* opacity, etc).
+  Primario  #123A6D · Secundario #26C6B8 · Fondo #F8FAFC · Texto #1E293B
+*/
+@layer base {
+  :root {
+    --background: 210 40% 98%; /* #F8FAFC */
+    --foreground: 217 33% 17%; /* #1E293B */
+
+    --card: 204 35% 95%; /* #EEF4F8 */
+    --card-foreground: 217 33% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+
+    --primary: 213 72% 25%; /* #123A6D */
+    --primary-hover: 213 76% 20%; /* #0F2F58 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 174 68% 46%; /* #26C6B8 */
+    --secondary-hover: 174 68% 40%; /* #1FB0A4 */
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 211 30% 45%; /* #4F6F95 */
+    --accent-foreground: 0 0% 100%;
+
+    --muted: 204 35% 95%;
+    --muted-foreground: 215 16% 47%; /* #64748B */
+
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%; /* #22C55E */
+    --warning: 38 92% 50%; /* #F59E0B */
+    --info: 217 91% 60%; /* #3B82F6 */
+
+    --border: 210 25% 88%;
+    --input: 210 25% 88%;
+    --ring: 213 72% 25%;
+
+    --radius: 0.625rem;
+
+    /* Paleta "Premium" — exclusiva del Portal MediPet Admin */
+    --pa-bg: 217 61% 12%; /* #0B1F3A */
+    --pa-surface: 217 45% 17%;
+    --pa-turquoise: 172 80% 40%; /* #14B8A6 */
+  }
+
+  .dark {
+    --background: 217 33% 10%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 12%;
+    --popover-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 16% 65%;
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "cv02",
+      "cv03",
+      "cv04",
+      "cv11";
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
