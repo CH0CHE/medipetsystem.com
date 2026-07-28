@@ -120,7 +120,11 @@ export async function middleware(request: NextRequest) {
 
   // --- CSRF de doble-submit para mutaciones sobre la API ---
   if (pathname.startsWith("/api/") && requiresCsrfCheck(request.method)) {
-    const exempt = pathname === "/api/auth/csrf" || pathname === "/api/auth/login" || pathname === "/api/platform-admin/auth/login";
+    const exempt =
+      pathname === "/api/auth/csrf" ||
+      pathname === "/api/auth/login" ||
+      pathname === "/api/platform-admin/auth/login" ||
+      pathname === "/api/public/leads";
     if (!exempt) {
       const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
       const headerToken = request.headers.get(CSRF_HEADER_NAME) ?? undefined;

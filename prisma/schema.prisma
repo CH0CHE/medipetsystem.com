@@ -105,6 +105,23 @@ enum PurchaseOrderStatus {
   CANCELADA
 }
 
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LeadSource {
+  CONTACTO
+  DEMO
+}
+
+enum LeadStatus {
+  NUEVO
+  CONTACTADO
+  CONVERTIDO
+  DESCARTADO
+}
+
 model Tenant {
   id         String       @id @default(uuid()) @db.Uuid
   tenantCode String       @unique @map("tenant_code")
@@ -192,6 +209,7 @@ model User {
   createdPayments    Payment[]        @relation("PaymentCreatedBy")
   createdPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
   createdPlatformInvoices PlatformInvoice[] @relation("PlatformInvoiceCreatedBy")
+  createdBlogPosts BlogPost[] @relation("BlogPostCreatedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -683,4 +701,65 @@ model PlatformInvoice {
   @@unique([tenantId, period])
   @@index([tenantId])
   @@map("platform_invoices")
+}
+
+model MarketingPlan {
+  id            String     @id @default(uuid()) @db.Uuid
+  planKey       TenantPlan @unique @map("plan_key")
+  name          String
+  price         Decimal    @db.Decimal(10, 2)
+  billingPeriod String     @map("billing_period")
+  description   String
+  features      String[]
+  highlighted   Boolean    @default(false)
+  displayOrder  Int        @map("display_order")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  @@map("marketing_plans")
+}
+
+model BlogPost {
+  id              String         @id @default(uuid()) @db.Uuid
+  title           String
+  slug            String         @unique
+  excerpt         String
+  content         String
+  coverImageUrl   String?        @map("cover_image_url")
+  status          BlogPostStatus @default(DRAFT)
+  authorName      String         @map("author_name")
+  publishedAt     DateTime?      @map("published_at")
+  createdByUserId String         @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  createdBy User @relation("BlogPostCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+model FaqItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  question     String
+  answer       String
+  displayOrder Int      @map("display_order")
+  isPublished  Boolean  @default(true) @map("is_published")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("faq_items")
+}
+
+model Lead {
+  id         String     @id @default(uuid()) @db.Uuid
+  fullName   String     @map("full_name")
+  email      String
+  phone      String?
+  clinicName String?    @map("clinic_name")
+  message    String?
+  source     LeadSource
+  status     LeadStatus @default(NUEVO)
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@map("leads")
 }

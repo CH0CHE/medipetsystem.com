@@ -62,6 +62,17 @@ const PERMISSIONS = [
   { code: "reports.view", module: "reports", description: "Ver y exportar reportes gerenciales." },
   { code: "settings.password_policy.view", module: "settings", description: "Ver la política de contraseñas de la clínica." },
   { code: "settings.password_policy.update", module: "settings", description: "Cambiar la política de contraseñas de la clínica." },
+  { code: "platform_admin.content.plans.update", module: "platform_admin", description: "Editar las tarjetas de precio públicas." },
+  { code: "platform_admin.content.blog.view", module: "platform_admin", description: "Ver posts de blog (todos los estados)." },
+  { code: "platform_admin.content.blog.create", module: "platform_admin", description: "Crear posts de blog." },
+  { code: "platform_admin.content.blog.update", module: "platform_admin", description: "Editar posts de blog." },
+  { code: "platform_admin.content.blog.delete", module: "platform_admin", description: "Eliminar posts de blog." },
+  { code: "platform_admin.content.faq.view", module: "platform_admin", description: "Ver preguntas frecuentes (todas)." },
+  { code: "platform_admin.content.faq.create", module: "platform_admin", description: "Crear preguntas frecuentes." },
+  { code: "platform_admin.content.faq.update", module: "platform_admin", description: "Editar preguntas frecuentes." },
+  { code: "platform_admin.content.faq.delete", module: "platform_admin", description: "Eliminar preguntas frecuentes." },
+  { code: "platform_admin.leads.view", module: "platform_admin", description: "Ver leads capturados (contacto/demo)." },
+  { code: "platform_admin.leads.update", module: "platform_admin", description: "Cambiar el estado de un lead." },
 ] as const;
 
 const CRM_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "crm").map((p) => p.code);
@@ -159,6 +170,102 @@ async function main() {
     console.log("============================================================\n");
   } else {
     console.log(`El usuario ${username} ya existe, se omite su creación.`);
+  }
+
+  const MARKETING_PLANS = [
+    {
+      planKey: "BASIC" as const,
+      name: "Básico",
+      price: 299,
+      billingPeriod: "mensual",
+      description: "Para clínicas de una sola sucursal que están empezando a digitalizarse.",
+      features: ["1 sucursal", "Hasta 3 usuarios", "CRM y expediente médico", "Inventario básico", "Soporte por correo"],
+      highlighted: false,
+      displayOrder: 1,
+    },
+    {
+      planKey: "PRO" as const,
+      name: "Pro",
+      price: 599,
+      billingPeriod: "mensual",
+      description: "Para clínicas en crecimiento con varias sucursales y necesidad de reportes.",
+      features: [
+        "Hasta 3 sucursales",
+        "Usuarios ilimitados",
+        "Facturación y cuentas por cobrar",
+        "Compras y proveedores",
+        "Reportes gerenciales",
+        "Soporte prioritario",
+      ],
+      highlighted: true,
+      displayOrder: 2,
+    },
+    {
+      planKey: "ENTERPRISE" as const,
+      name: "Enterprise",
+      price: 1299,
+      billingPeriod: "mensual",
+      description: "Para grupos veterinarios con múltiples sucursales y necesidades a la medida.",
+      features: [
+        "Sucursales ilimitadas",
+        "Usuarios ilimitados",
+        "Todos los módulos",
+        "Auditoría y control de accesos avanzado",
+        "Soporte dedicado",
+      ],
+      highlighted: false,
+      displayOrder: 3,
+    },
+  ];
+
+  for (const plan of MARKETING_PLANS) {
+    await prisma.marketingPlan.upsert({
+      where: { planKey: plan.planKey },
+      update: {},
+      create: plan,
+    });
+  }
+
+  const faqCount = await prisma.faqItem.count();
+  if (faqCount === 0) {
+    await prisma.faqItem.createMany({
+      data: [
+        {
+          question: "¿Qué es MediPet System?",
+          answer:
+            "Una plataforma SaaS todo-en-uno para administrar clínicas veterinarias: pacientes, expedientes, inventario, facturación, compras, agenda y reportes gerenciales, desde un solo lugar.",
+          displayOrder: 1,
+          isPublished: true,
+        },
+        {
+          question: "¿Puedo administrar varias sucursales?",
+          answer:
+            "Sí, cada clínica puede tener múltiples sucursales con inventario y usuarios propios, todo bajo la misma cuenta.",
+          displayOrder: 2,
+          isPublished: true,
+        },
+        {
+          question: "¿Cómo funciona la facturación?",
+          answer:
+            "Al emitir una factura se descuenta el stock automáticamente (primero lo próximo a vencer), se actualiza el inventario y se refleja en la cuenta por cobrar del propietario.",
+          displayOrder: 3,
+          isPublished: true,
+        },
+        {
+          question: "¿Mis datos están seguros?",
+          answer:
+            "Sí — contraseñas con Argon2id, sesiones con JWT y rotación de tokens, control de acceso por rol, y auditoría de cada acción crítica del sistema.",
+          displayOrder: 4,
+          isPublished: true,
+        },
+        {
+          question: "¿Puedo probar la plataforma antes de contratarla?",
+          answer: "Sí, solicita una demo desde este sitio y un miembro de nuestro equipo te contactará.",
+          displayOrder: 5,
+          isPublished: true,
+        },
+      ],
+    });
   }
 }
 
