@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertCircle, ShieldCheck } from "lucide-react";
@@ -11,21 +12,32 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest, ApiClientError } from "@/lib/api/client";
 import {
-  changePasswordSchema,
+  buildChangePasswordSchema,
   type ChangePasswordInput,
 } from "@/modules/auth/application/dto/change-password.schema";
-import { PASSWORD_POLICY } from "@/lib/security/password-policy";
+import { DEFAULT_PASSWORD_POLICY, type PasswordPolicy } from "@/lib/security/password-policy";
 
 export function ChangePasswordForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const { data: policy } = useQuery({
+    queryKey: ["password-policy"],
+    queryFn: () =>
+      apiRequest<{ policy: PasswordPolicy }>("/api/settings/password-policy").then((r) => r.policy),
+    // Si esta petición falla (ej. usuario sin tenant, como el Super Admin), se sigue usando el
+    // default de la aplicación — la validación real y autoritativa ocurre en el servidor.
+    retry: false,
+  });
+
+  const effectivePolicy = policy ?? DEFAULT_PASSWORD_POLICY;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordInput>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(buildChangePasswordSchema(effectivePolicy)),
     defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
 
@@ -40,6 +52,14 @@ export function ChangePasswordForm() {
     }
   };
 
+  const rules = [
+    `mínimo ${effectivePolicy.minLength} caracteres`,
+    effectivePolicy.requireUppercase && "mayúscula",
+    effectivePolicy.requireLowercase && "minúscula",
+    effectivePolicy.requireNumber && "número",
+    effectivePolicy.requireSymbol && "símbolo",
+  ].filter(Boolean);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       {serverError && (
@@ -51,9 +71,7 @@ export function ChangePasswordForm() {
 
       <Alert className="border-info/40 bg-info/10 text-info">
         <ShieldCheck className="size-4" />
-        <AlertDescription className="text-foreground">
-          Mínimo {PASSWORD_POLICY.minLength} caracteres, con mayúscula, minúscula, número y símbolo.
-        </AlertDescription>
+        <AlertDescription className="text-foreground">Requisitos: {rules.join(", ")}.</AlertDescription>
       </Alert>
 
       <div className="space-y-2">

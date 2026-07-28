@@ -60,6 +60,8 @@ const PERMISSIONS = [
   { code: "purchases.orders.receive", module: "purchases", description: "Registrar recepción de mercancía." },
   { code: "purchases.orders.cancel", module: "purchases", description: "Cancelar órdenes de compra." },
   { code: "reports.view", module: "reports", description: "Ver y exportar reportes gerenciales." },
+  { code: "settings.password_policy.view", module: "settings", description: "Ver la política de contraseñas de la clínica." },
+  { code: "settings.password_policy.update", module: "settings", description: "Cambiar la política de contraseñas de la clínica." },
 ] as const;
 
 const CRM_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "crm").map((p) => p.code);
@@ -68,6 +70,7 @@ const INVENTORY_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "inventory"
 const BILLING_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "billing").map((p) => p.code);
 const PURCHASES_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "purchases").map((p) => p.code);
 const REPORTS_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "reports").map((p) => p.code);
+const SETTINGS_PERMISSIONS = PERMISSIONS.filter((p) => p.module === "settings").map((p) => p.code);
 
 const ROLE_PERMISSION_MAP: Record<string, readonly string[]> = {
   SUPER_ADMIN_MEDIPET: PERMISSIONS.map((p) => p.code),
@@ -78,6 +81,7 @@ const ROLE_PERMISSION_MAP: Record<string, readonly string[]> = {
     ...BILLING_PERMISSIONS,
     ...PURCHASES_PERMISSIONS,
     ...REPORTS_PERMISSIONS,
+    ...SETTINGS_PERMISSIONS,
   ],
   RECEPCION: CRM_PERMISSIONS,
   VETERINARIO: ["crm.owners.view", "crm.pets.view", "crm.pets.update", ...CLINICAL_PERMISSIONS],

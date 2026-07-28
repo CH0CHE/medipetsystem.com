@@ -50,7 +50,7 @@ export const TENANT_NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Usuarios y roles", icon: ShieldCheck, enabled: false },
       { label: "Sucursales", icon: Building2, enabled: false },
-      { label: "Configuración", icon: Settings, enabled: false },
+      { label: "Configuración", href: "/dashboard/configuracion", icon: Settings, enabled: true },
     ],
   },
 ];

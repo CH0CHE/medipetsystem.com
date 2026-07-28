@@ -4,13 +4,18 @@ import { setSessionCookies } from "@/lib/auth/cookies";
 import { requireAuthContext } from "@/lib/auth/require-permission";
 import { mapAuthErrorToApiError } from "@/modules/auth/application/map-auth-error";
 import { authService } from "@/modules/auth";
-import { changePasswordSchema } from "@/modules/auth/application/dto/change-password.schema";
+import { buildChangePasswordSchema } from "@/modules/auth/application/dto/change-password.schema";
+import { settingsService } from "@/modules/settings";
+import { DEFAULT_PASSWORD_POLICY } from "@/lib/security/password-policy";
 
 export async function POST(request: Request) {
   try {
     const ctx = await requireAuthContext("tenant");
+    const policy = ctx.tenantId
+      ? await settingsService.getEffectivePasswordPolicy(ctx.tenantId)
+      : DEFAULT_PASSWORD_POLICY;
     const body = await request.json();
-    const input = changePasswordSchema.parse(body);
+    const input = buildChangePasswordSchema(policy).parse(body);
 
     const meta = { ipAddress: getRequestIp(request), userAgent: getRequestUserAgent(request) };
     const tokens = await authService.changePassword(ctx.userId, input, meta);
