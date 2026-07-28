@@ -26,4 +26,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
+# Liveness: /api/health/live no depende de la base de datos — un contenedor no
+# debería marcarse unhealthy solo porque Postgres esté momentáneamente lento.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health/live || exit 1
 CMD ["pnpm", "start"]

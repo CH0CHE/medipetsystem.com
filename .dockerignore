@@ -1,0 +1,18 @@
+# El build de Docker instala dependencias y compila dentro del contenedor —
+# sin este archivo, `docker build` envía todo node_modules/.git/.next como
+# contexto (varios GB) y puede fallar por archivos que no son compatibles con
+# el formato tar (ej. symlinks/permisos particulares dentro de node_modules).
+node_modules
+.next
+.git
+.claude
+coverage
+playwright-report
+test-results
+.env
+.env.*.local
+*.log
+npm-debug.log*
+
+# Solo se necesita en local para Prisma migrate dev / desarrollo con Docker Compose
+docker-compose.yml

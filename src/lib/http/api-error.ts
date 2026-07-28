@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
+import { logError } from "@/lib/observability/logger";
 
 export class ApiError extends Error {
   constructor(
@@ -45,7 +46,10 @@ export function apiErrorResponse(error: unknown): NextResponse {
   if (spError) {
     return NextResponse.json({ error: spError.message, code: spError.code }, { status: spError.status });
   }
-  console.error("Unhandled API error:", error);
+  logError("Unhandled API error", {
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  });
   return NextResponse.json({ error: "Error interno del servidor." }, { status: 500 });
 }
 

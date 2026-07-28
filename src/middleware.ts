@@ -3,6 +3,7 @@ import { verifyAccessToken } from "@/lib/auth/token.service";
 import { cookieNamesFor } from "@/lib/auth/cookies";
 import { csrfTokensMatch, requiresCsrfCheck, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/security/csrf";
 import { createRateLimitStore, checkRateLimit } from "@/lib/security/rate-limiter";
+import { incrementRequestCount, incrementRateLimitRejection, renderPrometheusMetrics } from "@/lib/observability/metrics";
 
 const TENANT_COOKIES = cookieNamesFor("tenant");
 const PA_COOKIES = cookieNamesFor("platform-admin");
@@ -73,13 +74,29 @@ export async function middleware(request: NextRequest) {
     return respond(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
+  // --- Métricas operacionales ---
+  // Se atiende aquí mismo, dentro del middleware, en vez de en una API route
+  // separada: Next.js aísla middleware y cualquier ruta (Edge o Node) en
+  // sandboxes de memoria distintos, incluso si ambos corren en Edge Runtime —
+  // no comparten el módulo de contadores. Solo el propio middleware, que es
+  // quien los incrementa, puede leerlos de forma coherente.
+  if (pathname === "/api/metrics") {
+    return respond(
+      new NextResponse(renderPrometheusMetrics(), {
+        headers: { "Content-Type": "text/plain; version=0.0.4; charset=utf-8" },
+      }),
+    );
+  }
+
   // --- Rate limiting general + extra estricto sobre login ---
   if (pathname.startsWith("/api/")) {
+    incrementRequestCount();
     const ip = getClientIp(request);
 
     if (LOGIN_PATHS.has(pathname)) {
       const loginResult = checkRateLimit(loginRateLimitStore, `${ip}:${pathname}`, Date.now(), LOGIN_RATE_LIMIT.limit, LOGIN_RATE_LIMIT.windowMs);
       if (!loginResult.allowed) {
+        incrementRateLimitRejection();
         return respond(
           NextResponse.json(
             { error: "Demasiados intentos. Intenta de nuevo más tarde." },
@@ -91,6 +108,7 @@ export async function middleware(request: NextRequest) {
 
     const generalResult = checkRateLimit(generalRateLimitStore, ip, Date.now(), GENERAL_RATE_LIMIT.limit, GENERAL_RATE_LIMIT.windowMs);
     if (!generalResult.allowed) {
+      incrementRateLimitRejection();
       return respond(
         NextResponse.json(
           { error: "Demasiadas solicitudes. Intenta de nuevo más tarde." },

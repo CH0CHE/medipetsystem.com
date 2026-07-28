@@ -385,6 +385,7 @@ model MedicalRecordEntry {
 
   @@index([tenantId])
   @@index([petId])
+  @@index([tenantId, entryDate])
   @@map("medical_record_entries")
 }
 
@@ -550,6 +551,7 @@ model Invoice {
 
   @@index([tenantId])
   @@index([ownerId])
+  @@index([tenantId, issueDate])
   @@map("invoices")
 }
 

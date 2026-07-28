@@ -3,22 +3,25 @@
 Plataforma SaaS multiempresa para la administración integral de clínicas veterinarias,
 hospitales veterinarios y pet shops.
 
-**Estado actual: Fase 9 completa** — Arquitectura base/Auth/Multitenancy (Fase 1),
-CRM de Propietarios y Pacientes (Fase 2), Expediente Médico (Fase 3), Inventario
-con alertas de vencimiento (Fase 4), Facturación y Cuentas por Cobrar (Fase 5):
-cotizaciones, facturas con descuento de stock FEFO, notas de crédito/débito,
-pagos parciales y estado de cuenta por propietario, Compras (Fase 6): proveedores,
-órdenes de compra con recepción parcial/total de mercancía y actualización
-automática de stock (mismos lotes y movimientos que Inventario), Reportes
-(Fase 7): Ventas, Inventario, Productos por vencer, Clientes morosos, Consultas
-realizadas, Rentabilidad y Veterinarios más activos, todos exportables a
-PDF/Excel/CSV, Portal MediPet Admin (Fase 8): ficha de clínica con gestión de
-planes, baja permanente (distinta de la suspensión reversible), facturación de
-suscripción, métricas SaaS, soporte (usuarios conector) y auditoría global,
-Hardening de seguridad (Fase 9): rate limiting general por IP + CSP con nonce
-+ COOP/CORP, política de complejidad de contraseñas configurable por clínica,
-y una suite de pruebas de seguridad dedicada (rate limiter, política de
-contraseñas, inyección SQL, esquemas de URL peligrosos).
+**Estado actual: Fase 10 completa — roadmap de 10 fases completo.**
+Arquitectura base/Auth/Multitenancy (Fase 1), CRM de Propietarios y Pacientes
+(Fase 2), Expediente Médico (Fase 3), Inventario con alertas de vencimiento
+(Fase 4), Facturación y Cuentas por Cobrar (Fase 5): cotizaciones, facturas con
+descuento de stock FEFO, notas de crédito/débito, pagos parciales y estado de
+cuenta por propietario, Compras (Fase 6): proveedores, órdenes de compra con
+recepción parcial/total de mercancía y actualización automática de stock
+(mismos lotes y movimientos que Inventario), Reportes (Fase 7): Ventas,
+Inventario, Productos por vencer, Clientes morosos, Consultas realizadas,
+Rentabilidad y Veterinarios más activos, todos exportables a PDF/Excel/CSV,
+Portal MediPet Admin (Fase 8): ficha de clínica con gestión de planes, baja
+permanente (distinta de la suspensión reversible), facturación de suscripción,
+métricas SaaS, soporte (usuarios conector) y auditoría global, Hardening de
+seguridad (Fase 9): rate limiting general por IP + CSP con nonce + COOP/CORP,
+política de complejidad de contraseñas configurable por clínica, y una suite
+de pruebas de seguridad dedicada, Optimización y escalabilidad (Fase 10):
+logs estructurados, métricas operacionales, liveness/readiness separados,
+índices de base de datos adicionales y guía de despliegue serverless — ver
+detalle en [Rendimiento y escalabilidad](#rendimiento-y-escalabilidad).
 Ver el roadmap completo en [`claude.md`](./claude.md).
 
 ## Stack
@@ -43,7 +46,7 @@ Client ni acceso directo del frontend a la base de datos.
 pnpm install
 cp .env.example .env        # ajusta POSTGRES_PORT si 5432 ya está en uso en tu máquina
 docker compose up -d        # Postgres en $POSTGRES_PORT + Adminer en :8080
-pnpm prisma:deploy          # aplica las 5 migraciones (schema + stored procedures)
+pnpm prisma:deploy          # aplica todas las migraciones (schema + stored procedures)
 pnpm prisma:seed            # roles/permisos del sistema + Super Admin MediPet (bootstrap)
 pnpm dev                    # http://localhost:3000
 ```
@@ -71,28 +74,28 @@ que aparece una sola vez tras crearla).
 
 ```
 prisma/
-  schema.prisma          # 9 modelos — SOLO esquema/migraciones, nunca queries de negocio
-  migrations/             # incluye migraciones "vacías" rellenadas a mano con SPs en SQL puro
+  schema.prisma          # SOLO esquema/migraciones, nunca queries de negocio
+  migrations/            # cada módulo trae su propia migración de stored procedures en SQL puro
   seed.ts
 
 src/
-  middleware.ts           # Edge: guards de auth, CSRF, forzado de cambio de contraseña
-  app/                    # rutas (App Router): (auth)/, dashboard/, platform-admin/, api/
+  middleware.ts           # Edge: rate limiting, CSP+nonce, CSRF, guards de auth, forzado de cambio de contraseña
+  app/                    # rutas (App Router): dashboard/, platform-admin/, api/
   components/ui/          # primitivas estilo shadcn/ui (hechas a mano, sin CLI)
-  components/{layout,dashboard,platform-admin}/
+  components/{layout,platform-admin,billing,purchases,reports,settings,...}/
   lib/
-    security/             # password.service, password-policy, csrf — password.service.ts
-                          # y token.service.ts están hechos para ser Edge-safe: no importan
-                          # node:crypto (usan Web Crypto) porque el middleware corre en Edge.
+    security/             # password.service, password-policy, csrf, rate-limiter — todo
+                          # Edge-safe (Web Crypto, no node:crypto) porque el middleware corre en Edge.
     auth/                 # token.service (edge-safe), refresh-token.util (Node-only),
                           # server-session, require-permission, cookies
+    observability/        # logger + métricas operacionales (Fase 10)
     audit/, http/, api/, store/
   modules/
-    auth/                 # domain → application → infrastructure, wired en index.ts
-    platform-admin/       # ídem — CRUD de tenants
-    users/, branches/     # entidades compartidas
-    clients/, pets/, medical-records/, inventory/, billing/, crm/, reports/, settings/
-      # stubs — cada uno con un README "Planificado para Fase N"
+    auth/                 # domain → application → infrastructure, wired en index.ts (mismo patrón en todos)
+    platform-admin/       # tenants, planes, facturación de suscripción, métricas SaaS, auditoría global, soporte
+    owners/, pets/, medical-records/, inventory/, billing/, purchases/, reports/, settings/
+    users/, branches/     # solo tipos compartidos — "Usuarios y roles"/"Sucursales" quedan fuera del
+                          # roadmap de 10 fases (nav marcado "Próximamente"), no son un stub olvidado
 
 tests/
   e2e/                    # Playwright — ver sección de abajo
@@ -121,23 +124,29 @@ tests/
   propia fila en `audit_logs` en la misma transacción — nunca es un paso aparte que se
   pueda omitir.
 
-## Puntos de extensión documentados (para fases futuras)
+## Puntos de extensión documentados (fuera del roadmap de 10 fases)
 
 - **MFA**: no implementado; el modelo `User` y el flujo de login están preparados para
   añadir un paso de verificación adicional sin romper la forma de `AccessTokenClaims`.
-- **Row-Level Security (RLS) de Postgres**: recomendado una vez existan más tablas
-  tenant-scoped (Fase 2+); hoy el aislamiento se garantiza en la capa de aplicación.
-- **Política de contraseñas por tenant**: hoy es una constante de código
-  (`src/lib/security/password-policy.ts`); una versión configurable por clínica en base
-  de datos vive en el alcance de `modules/settings`.
-- **Rate limiting**: implementado vía consultas a `audit_logs` (suficiente para el
-  tráfico de Fase 1); una versión respaldada por Redis queda para Fase 10
-  (optimización/escalabilidad).
+- **Row-Level Security (RLS) de Postgres**: recomendado como capa adicional; hoy el
+  aislamiento de tenant ya se garantiza en cada stored procedure (`p_tenant_id`
+  explícito y verificado siempre) y en la capa de aplicación.
+- **Rate limiting / métricas distribuidos**: el rate limiter (`src/lib/security/rate-limiter.ts`)
+  y los contadores operacionales (`src/lib/observability/metrics.ts`) son en memoria,
+  por instancia — suficiente como primera capa, pero no se agregan entre réplicas. El
+  siguiente paso natural al escalar horizontalmente es respaldar ambos en un store
+  compartido (Redis/Upstash) sin cambiar sus firmas.
+- **"Usuarios y roles" / "Sucursales"**: pantallas de administración dedicadas —
+  hoy los roles/permisos existen y se aplican (seed + RBAC), pero no hay una UI de
+  gestión propia; queda fuera del roadmap de 10 fases del spec.
 
 ## Testing
 
-- **Unitarias (Vitest)**: `pnpm test` — servicios de auth/tenants, hashing de
-  contraseñas, tokens JWT, CSRF, `requirePermission`, esquemas Zod. 53 pruebas.
+- **Unitarias (Vitest)**: `pnpm test` — servicios de cada módulo (con repositorios
+  mockeados), hashing de contraseñas, tokens JWT, CSRF, rate limiter, política de
+  contraseñas, `requirePermission`, esquemas Zod, y una suite de seguridad dedicada
+  (`*.security.test.ts`: rate limiter, política de contraseñas configurable, inyección
+  SQL en 2 repositorios representativos, esquemas de URL peligrosos). 138 pruebas.
 - **E2E (Playwright)**: `pnpm test:e2e` — `tests/e2e/global-setup.ts` crea una base de
   datos Postgres **desechable** (`medipetsystem_e2e`, misma instancia de
   docker-compose), le aplica las migraciones, la trunca y la siembra con datos
@@ -152,7 +161,59 @@ tests/
   > Google Chrome ya instalado en el sistema (`channel: "chrome"`) en vez de depender de
   > esa descarga.
 
+## Rendimiento y escalabilidad
+
+- **Health checks separados (Kubernetes-style)**: `/api/health` es el probe de
+  *readiness* (valida conexión a Postgres); `/api/health/live` es el de *liveness*
+  (sin dependencias — un pod no debería reiniciarse solo porque la BD esté lenta).
+  `docker/Dockerfile` usa `/api/health/live` en su `HEALTHCHECK`.
+- **Logs estructurados**: `src/lib/observability/logger.ts` — `logInfo/logWarn/logError`
+  emiten una línea JSON por evento (nivel, mensaje, timestamp, contexto), Edge-safe.
+  Sin proveedor externo integrado (Sentry/Datadog no están en el stack declarado);
+  `logError` es el único punto que necesitaría reenviarse si se adopta uno.
+- **Métricas operacionales**: `/api/metrics` expone en formato Prometheus contadores de
+  requests totales y rechazos por rate limit (`src/lib/observability/metrics.ts`). Se
+  atiende directamente dentro de `src/middleware.ts` (no como una API route aparte):
+  Next.js aísla el middleware de cualquier ruta —incluso otra ruta en Edge Runtime— en
+  sandboxes de memoria distintos, así que una API route separada siempre leería los
+  contadores en cero aunque ambos corrieran en Edge. Solo el propio middleware, que es
+  quien los incrementa, puede leerlos de forma coherente. Por esa misma razón los
+  errores 5xx (que se originan en código Node, ej. rutas con Prisma) no viven en este
+  contador — se registran vía `logError` (logs estructurados) en su lugar. Distinto de
+  `/api/platform-admin/metrics` (Fase 8), que son métricas de negocio SaaS, no operacionales.
+- **Límite honesto — en memoria, por instancia**: el rate limiter (Fase 9) y estos
+  contadores viven en memoria de cada proceso. En una sola instancia son una capa real
+  de protección/observabilidad; con varias réplicas cada una lleva su propio conteo, no
+  agregado. El camino de escalado (Redis/Upstash respaldando el mismo `RateLimitStore`
+  y los mismos contadores, sin cambiar sus firmas) queda documentado en el propio código.
+- **Índices de base de datos**: además de los índices por `tenantId` en cada tabla,
+  se agregaron compuestos `[tenantId, issueDate]` en `invoices` y
+  `[tenantId, entryDate]` en `medical_record_entries` — respaldan directamente los
+  `WHERE ... BETWEEN ... ORDER BY` que ya usan los reportes de Ventas/Rentabilidad y el
+  listado de expediente médico.
+- **Conexión a BD en despliegues serverless/multi-instancia**: ver el comentario en
+  `.env.example` sobre `connection_limit`/`pgbouncer=true` en `DATABASE_URL` — sin esto,
+  muchas instancias en paralelo (Vercel, Kubernetes con varias réplicas) agotan las
+  conexiones de Postgres rápido.
+- **React Query**: `staleTime` global de 60s (`src/app/providers.tsx`) reduce refetches
+  redundantes en toda la app.
+
+## Cobertura de pruebas
+
+`pnpm test:coverage` reporta **~46% de líneas/statements y ~63% de funciones** — por
+debajo del 85% que pide el spec. Esto es una decisión de producto explícita, no un
+olvido: cada fase escribió pruebas unitarias para sus *services* (con repositorios
+mockeados) y se verificó manualmente con un script de Playwright desechable por fase
+contra datos reales, pero las ~50 rutas API y los ~40 archivos de repositorio (que
+solo envuelven una llamada a una stored procedure) no tienen prueba directa propia —
+se ejercitan a través de esa verificación manual, no de Vitest. Cerrar el 85% real
+implicaría escribir pruebas para cada ruta y cada repositorio, un esfuerzo comparable
+al de todas las fases anteriores juntas. Queda para el pase final de pruebas E2E que
+hará el usuario (`pnpm test:e2e`, suite ya construida en Fase 1 — ver
+[Testing](#testing)), como el resto de la verificación exhaustiva del proyecto.
+
 ## Docker
 
 `docker-compose.yml` levanta Postgres + Adminer para desarrollo local. `docker/Dockerfile`
-es un build multi-stage para producción (no se necesita para desarrollo local).
+es un build multi-stage para producción (no se necesita para desarrollo local), con un
+`HEALTHCHECK` sobre `/api/health/live`.
