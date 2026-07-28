@@ -5,6 +5,7 @@ import {
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   RateLimitedError,
+  TenantCancelledError,
   TenantSuspendedError,
   TokenReuseDetectedError,
   WrongPortalError,
@@ -20,6 +21,9 @@ export function mapAuthErrorToApiError(error: unknown): ApiError | null {
   }
   if (error instanceof TenantSuspendedError) {
     return new ApiError(403, error.message, "TENANT_SUSPENDED");
+  }
+  if (error instanceof TenantCancelledError) {
+    return new ApiError(403, error.message, "TENANT_CANCELLED");
   }
   if (error instanceof WrongPortalError || error instanceof InvalidCredentialsError) {
     return new ApiError(401, error instanceof WrongPortalError ? error.message : "Usuario o contraseña incorrectos.", "INVALID_CREDENTIALS");

@@ -26,6 +26,13 @@ export class TenantSuspendedError extends Error {
   }
 }
 
+export class TenantCancelledError extends Error {
+  constructor() {
+    super("Esta clínica ha sido dada de baja. Contacta a MediPet System.");
+    this.name = "TenantCancelledError";
+  }
+}
+
 export class WrongPortalError extends Error {
   constructor() {
     super("Este usuario no tiene acceso a este portal.");

@@ -7,10 +7,10 @@ export const PLATFORM_ADMIN_NAV_GROUPS: NavGroup[] = [
     title: "MediPet Admin",
     items: [
       { label: "Clientes", href: "/platform-admin/dashboard/clientes", icon: Building2, enabled: true },
-      { label: "Planes", icon: CreditCard, enabled: false },
-      { label: "Métricas SaaS", icon: LineChart, enabled: false },
-      { label: "Soporte", icon: LifeBuoy, enabled: false },
-      { label: "Auditoría", icon: ScrollText, enabled: false },
+      { label: "Planes", href: "/platform-admin/dashboard/planes", icon: CreditCard, enabled: true },
+      { label: "Métricas SaaS", href: "/platform-admin/dashboard/metricas", icon: LineChart, enabled: true },
+      { label: "Soporte", href: "/platform-admin/dashboard/soporte", icon: LifeBuoy, enabled: true },
+      { label: "Auditoría", href: "/platform-admin/dashboard/auditoria", icon: ScrollText, enabled: true },
     ] satisfies NavItemData[],
   },
 ];

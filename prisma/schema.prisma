@@ -16,6 +16,12 @@ datasource db {
 enum TenantStatus {
   ACTIVE
   SUSPENDED
+  CANCELADA
+}
+
+enum SubscriptionInvoiceStatus {
+  PENDIENTE
+  PAGADA
 }
 
 enum TenantPlan {
@@ -124,6 +130,7 @@ model Tenant {
   payments             Payment[]
   suppliers            Supplier[]
   purchaseOrders       PurchaseOrder[]
+  platformInvoices     PlatformInvoice[]
 
   @@map("tenants")
 }
@@ -183,6 +190,7 @@ model User {
   createdAdjustments AdjustmentNote[] @relation("AdjustmentCreatedBy")
   createdPayments    Payment[]        @relation("PaymentCreatedBy")
   createdPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
+  createdPlatformInvoices PlatformInvoice[] @relation("PlatformInvoiceCreatedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -653,4 +661,23 @@ model PurchaseOrderItem {
 
   @@index([purchaseOrderId])
   @@map("purchase_order_items")
+}
+
+model PlatformInvoice {
+  id              String                    @id @default(uuid()) @db.Uuid
+  tenantId        String                    @map("tenant_id") @db.Uuid
+  period          String
+  plan            TenantPlan
+  amount          Decimal                   @db.Decimal(10, 2)
+  status          SubscriptionInvoiceStatus @default(PENDIENTE)
+  paidAt          DateTime?                 @map("paid_at")
+  createdByUserId String                    @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime                  @default(now()) @map("created_at")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("PlatformInvoiceCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, period])
+  @@index([tenantId])
+  @@map("platform_invoices")
 }

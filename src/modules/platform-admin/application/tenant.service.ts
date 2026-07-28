@@ -1,6 +1,6 @@
 import { hashPassword, generateTemporaryPassword } from "@/lib/security/password.service";
 import type { ITenantRepository } from "../domain/repositories";
-import type { CreateTenantResult, TenantListResult, TenantPlan, TenantStatus } from "../domain/entities";
+import type { CreateTenantResult, TenantDetail, TenantListResult, TenantPlan, TenantStatus } from "../domain/entities";
 
 export class TenantService {
   constructor(private readonly tenantRepository: ITenantRepository) {}
@@ -55,5 +55,17 @@ export class TenantService {
 
   async reactivateTenant(tenantId: string, actorUserId: string): Promise<void> {
     await this.tenantRepository.reactivateTenant(tenantId, actorUserId);
+  }
+
+  async getTenantDetail(tenantId: string): Promise<TenantDetail | null> {
+    return this.tenantRepository.getTenantDetail(tenantId);
+  }
+
+  async cancelTenant(tenantId: string, actorUserId: string): Promise<void> {
+    await this.tenantRepository.cancelTenant(tenantId, actorUserId);
+  }
+
+  async updateTenantPlan(tenantId: string, plan: TenantPlan, actorUserId: string): Promise<void> {
+    await this.tenantRepository.updateTenantPlan(tenantId, plan, actorUserId);
   }
 }

@@ -45,6 +45,12 @@ import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { TenantListItem, TenantListResult } from "@/modules/platform-admin/domain/entities";
 
 const PLAN_LABEL: Record<string, string> = { BASIC: "Básico", PRO: "Pro", ENTERPRISE: "Enterprise" };
+const STATUS_LABEL: Record<string, string> = { ACTIVE: "Activa", SUSPENDED: "Suspendida", CANCELADA: "Dada de baja" };
+const STATUS_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
+  ACTIVE: "success",
+  SUSPENDED: "warning",
+  CANCELADA: "destructive",
+};
 const PAGE_SIZE = 10;
 
 function buildQuery(params: Record<string, string | number | undefined>) {
@@ -136,6 +142,7 @@ export function TenantsTable() {
               <SelectItem value="all">Todos los estados</SelectItem>
               <SelectItem value="ACTIVE">Activas</SelectItem>
               <SelectItem value="SUSPENDED">Suspendidas</SelectItem>
+              <SelectItem value="CANCELADA">Dadas de baja</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -185,13 +192,15 @@ export function TenantsTable() {
                   <TableCell>
                     <Badge variant="mono">{tenant.tenantCode}</Badge>
                   </TableCell>
-                  <TableCell className="font-medium text-foreground">{tenant.name}</TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    <Link href={`/platform-admin/dashboard/clientes/${tenant.tenantId}`} className="hover:underline">
+                      {tenant.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{PLAN_LABEL[tenant.plan] ?? tenant.plan}</TableCell>
                   <TableCell>{tenant.branchCount}</TableCell>
                   <TableCell>
-                    <Badge variant={tenant.status === "ACTIVE" ? "success" : "destructive"}>
-                      {tenant.status === "ACTIVE" ? "Activa" : "Suspendida"}
-                    </Badge>
+                    <Badge variant={STATUS_VARIANT[tenant.status]}>{STATUS_LABEL[tenant.status]}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(tenant.createdAt).toLocaleDateString("es-GT")}
@@ -204,17 +213,21 @@ export function TenantsTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {tenant.status === "ACTIVE" ? (
+                        {tenant.status === "ACTIVE" && (
                           <DropdownMenuItem
                             variant="destructive"
                             onClick={() => setPendingAction({ tenant, type: "suspend" })}
                           >
                             <Ban className="mr-2 size-4" /> Suspender
                           </DropdownMenuItem>
-                        ) : (
+                        )}
+                        {tenant.status === "SUSPENDED" && (
                           <DropdownMenuItem onClick={() => setPendingAction({ tenant, type: "reactivate" })}>
                             <RotateCcw className="mr-2 size-4" /> Reactivar
                           </DropdownMenuItem>
+                        )}
+                        {tenant.status === "CANCELADA" && (
+                          <DropdownMenuItem disabled>Sin acciones disponibles</DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -18,6 +18,7 @@ import {
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   RateLimitedError,
+  TenantCancelledError,
   TenantSuspendedError,
   TokenReuseDetectedError,
   WrongPortalError,
@@ -119,6 +120,10 @@ export class AuthService {
       throw new TenantSuspendedError();
     }
 
+    if (context.tenantId && context.tenantStatus === "CANCELADA") {
+      throw new TenantCancelledError();
+    }
+
     if (context.userStatus === "DISABLED") {
       throw new AccountDisabledError();
     }
@@ -198,7 +203,11 @@ export class AuthService {
     }
 
     const session = await this.authRepository.getSessionContext(result.userId);
-    if (!session || session.userStatus !== "ACTIVE" || (session.tenantId && session.tenantStatus === "SUSPENDED")) {
+    if (
+      !session ||
+      session.userStatus !== "ACTIVE" ||
+      (session.tenantId && (session.tenantStatus === "SUSPENDED" || session.tenantStatus === "CANCELADA"))
+    ) {
       throw new InvalidRefreshTokenError();
     }
 

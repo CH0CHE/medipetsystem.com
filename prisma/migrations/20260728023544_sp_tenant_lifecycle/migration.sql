@@ -109,7 +109,7 @@ BEGIN
     t.plan,
     t.status,
     COUNT(b.id) AS branch_count,
-    t.created_at,
+    t.created_at::timestamptz,
     COUNT(*) OVER() AS total_count
   FROM tenants t
   LEFT JOIN branches b ON b.tenant_id = t.id

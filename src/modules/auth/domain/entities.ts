@@ -11,7 +11,7 @@ export interface LoginContext {
   lockedUntil: Date | null;
   isSuperAdmin: boolean;
   isSupportAccount: boolean;
-  tenantStatus: "ACTIVE" | "SUSPENDED" | null;
+  tenantStatus: "ACTIVE" | "SUSPENDED" | "CANCELADA" | null;
   tenantName: string | null;
   tenantCode: string | null;
   branchName: string | null;
@@ -28,7 +28,7 @@ export interface SessionContext {
   userStatus: "ACTIVE" | "DISABLED" | "LOCKED";
   isSuperAdmin: boolean;
   isSupportAccount: boolean;
-  tenantStatus: "ACTIVE" | "SUSPENDED" | null;
+  tenantStatus: "ACTIVE" | "SUSPENDED" | "CANCELADA" | null;
   tenantName: string | null;
   tenantCode: string | null;
   branchName: string | null;

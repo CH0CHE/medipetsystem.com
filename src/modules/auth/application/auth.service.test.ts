@@ -11,6 +11,7 @@ import {
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   RateLimitedError,
+  TenantCancelledError,
   TenantSuspendedError,
   TokenReuseDetectedError,
   WrongPortalError,
@@ -151,6 +152,16 @@ describe("AuthService.login", () => {
     await expect(
       service.login({ username: context.username, password: REAL_PASSWORD }, "tenant", META),
     ).rejects.toBeInstanceOf(TenantSuspendedError);
+  });
+
+  it("rejects when the tenant has been cancelled (baja permanente)", async () => {
+    const context = baseContext({ tenantStatus: "CANCELADA" });
+    const authRepo = makeAuthRepoMock(context);
+    const service = new AuthService(authRepo, makeRefreshRepoMock());
+
+    await expect(
+      service.login({ username: context.username, password: REAL_PASSWORD }, "tenant", META),
+    ).rejects.toBeInstanceOf(TenantCancelledError);
   });
 
   it("rejects a Super Admin account on the tenant login portal", async () => {

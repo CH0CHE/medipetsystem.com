@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import type { ITenantRepository } from "../domain/repositories";
-import type { TenantListItem, TenantPlan, TenantStatus } from "../domain/entities";
+import type { TenantListItem, TenantPlan, TenantStatus, UserAccountStatus } from "../domain/entities";
 
 type ListRow = {
   tenant_id: string;
@@ -11,6 +11,20 @@ type ListRow = {
   branch_count: bigint;
   created_at: Date;
   total_count: bigint;
+};
+
+type DetailRow = {
+  tenant_id: string;
+  tenant_code: string;
+  name: string;
+  plan: TenantPlan;
+  status: TenantStatus;
+  main_branch_name: string | null;
+  user_count: bigint;
+  connector_username: string | null;
+  connector_status: UserAccountStatus | null;
+  connector_last_login: Date | null;
+  created_at: Date;
 };
 
 export const tenantRepository: ITenantRepository = {
@@ -73,5 +87,34 @@ export const tenantRepository: ITenantRepository = {
 
   async reactivateTenant(tenantId, actorUserId) {
     await prisma.$executeRaw`SELECT sp_reactivate_tenant(${tenantId}::uuid, ${actorUserId}::uuid)`;
+  },
+
+  async getTenantDetail(tenantId) {
+    const rows = await prisma.$queryRaw<DetailRow[]>`
+      SELECT * FROM sp_get_tenant_detail(${tenantId}::uuid)
+    `;
+    if (rows.length === 0) return null;
+    const row = rows[0]!;
+    return {
+      tenantId: row.tenant_id,
+      tenantCode: row.tenant_code,
+      name: row.name,
+      plan: row.plan,
+      status: row.status,
+      mainBranchName: row.main_branch_name,
+      userCount: Number(row.user_count),
+      connectorUsername: row.connector_username,
+      connectorStatus: row.connector_status,
+      connectorLastLogin: row.connector_last_login,
+      createdAt: row.created_at,
+    };
+  },
+
+  async cancelTenant(tenantId, actorUserId) {
+    await prisma.$executeRaw`SELECT sp_cancel_tenant(${tenantId}::uuid, ${actorUserId}::uuid)`;
+  },
+
+  async updateTenantPlan(tenantId, plan, actorUserId) {
+    await prisma.$executeRaw`SELECT sp_update_tenant_plan(${tenantId}::uuid, ${plan}::"TenantPlan", ${actorUserId}::uuid)`;
   },
 };

@@ -3,7 +3,7 @@
 Plataforma SaaS multiempresa para la administración integral de clínicas veterinarias,
 hospitales veterinarios y pet shops.
 
-**Estado actual: Fase 7 completa** — Arquitectura base/Auth/Multitenancy (Fase 1),
+**Estado actual: Fase 8 completa** — Arquitectura base/Auth/Multitenancy (Fase 1),
 CRM de Propietarios y Pacientes (Fase 2), Expediente Médico (Fase 3), Inventario
 con alertas de vencimiento (Fase 4), Facturación y Cuentas por Cobrar (Fase 5):
 cotizaciones, facturas con descuento de stock FEFO, notas de crédito/débito,
@@ -12,7 +12,9 @@ pagos parciales y estado de cuenta por propietario, Compras (Fase 6): proveedore
 automática de stock (mismos lotes y movimientos que Inventario), Reportes
 (Fase 7): Ventas, Inventario, Productos por vencer, Clientes morosos, Consultas
 realizadas, Rentabilidad y Veterinarios más activos, todos exportables a
-PDF/Excel/CSV.
+PDF/Excel/CSV, Portal MediPet Admin (Fase 8): ficha de clínica con gestión de
+planes, baja permanente (distinta de la suspensión reversible), facturación de
+suscripción, métricas SaaS, soporte (usuarios conector) y auditoría global.
 Ver el roadmap completo en [`claude.md`](./claude.md).
 
 ## Stack

@@ -17,6 +17,9 @@ function makeRepoMock(): ITenantRepository {
     listTenants: vi.fn(),
     suspendTenant: vi.fn().mockResolvedValue(undefined),
     reactivateTenant: vi.fn().mockResolvedValue(undefined),
+    getTenantDetail: vi.fn().mockResolvedValue(null),
+    cancelTenant: vi.fn().mockResolvedValue(undefined),
+    updateTenantPlan: vi.fn().mockResolvedValue(undefined),
   } as unknown as ITenantRepository;
 }
 
@@ -78,5 +81,24 @@ describe("TenantService.createTenant", () => {
 
     await service.reactivateTenant("tenant-1", "actor-1");
     expect(repo.reactivateTenant).toHaveBeenCalledWith("tenant-1", "actor-1");
+  });
+
+  it("delegates cancelTenant and updateTenantPlan to the repository", async () => {
+    const repo = makeRepoMock();
+    const service = new TenantService(repo);
+
+    await service.cancelTenant("tenant-1", "actor-1");
+    expect(repo.cancelTenant).toHaveBeenCalledWith("tenant-1", "actor-1");
+
+    await service.updateTenantPlan("tenant-1", "PRO", "actor-1");
+    expect(repo.updateTenantPlan).toHaveBeenCalledWith("tenant-1", "PRO", "actor-1");
+  });
+
+  it("delegates getTenantDetail to the repository", async () => {
+    const repo = makeRepoMock();
+    const service = new TenantService(repo);
+
+    await service.getTenantDetail("tenant-1");
+    expect(repo.getTenantDetail).toHaveBeenCalledWith("tenant-1");
   });
 });

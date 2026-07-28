@@ -1,0 +1,16 @@
+import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/http/api-error";
+import { requireAuthContext, requirePermission } from "@/lib/auth/require-permission";
+import { auditService, PLATFORM_ADMIN_PERMISSIONS } from "@/modules/platform-admin";
+
+export async function GET(request: Request) {
+  try {
+    const ctx = await requireAuthContext("platform-admin");
+    await requirePermission(ctx, PLATFORM_ADMIN_PERMISSIONS.SUPPORT_VIEW, request);
+
+    const items = await auditService.listSupportAccounts();
+    return NextResponse.json({ items });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
