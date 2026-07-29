@@ -44,7 +44,7 @@ describe("TenantService.createTenant", () => {
     await service.createTenant({ clinicName: "Clínica ABC", branchName: "Central", plan: "BASIC" }, "creator-1");
 
     expect(repo.createTenant).toHaveBeenCalledOnce();
-    const call = (repo.createTenant as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.createTenant as ReturnType<typeof vi.fn>).mock.calls[0]![0];
 
     expect(call.adminPasswordHash).toBeTruthy();
     expect(call.connectorPasswordHash).toBeTruthy();
@@ -67,7 +67,7 @@ describe("TenantService.createTenant", () => {
     expect(result.adminTemporaryPassword).not.toEqual(result.connectorTemporaryPassword);
 
     // Ninguna de las dos contraseñas en texto plano debe llegar al repositorio.
-    const call = (repo.createTenant as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.createTenant as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(JSON.stringify(call)).not.toContain(result.adminTemporaryPassword);
     expect(JSON.stringify(call)).not.toContain(result.connectorTemporaryPassword);
   });

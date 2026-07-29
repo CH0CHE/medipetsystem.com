@@ -44,7 +44,7 @@ describe("QuoteService.createQuote", () => {
       ACTOR_ID,
     );
 
-    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.expiryDate).toBeNull();
   });
 });

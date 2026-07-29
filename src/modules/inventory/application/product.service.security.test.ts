@@ -30,7 +30,7 @@ describe("SQL injection safety — ProductService.listProducts", () => {
     // Igual que en el resto de la aplicación: el valor llega intacto al repositorio,
     // que lo liga con $queryRaw (tagged template) hacia sp_list_products — nunca se
     // concatena a mano en ninguna capa intermedia.
-    const call = (repo.list as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.list as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.search).toBe(SQLI_PAYLOAD);
     expect(call.tenantId).toBe(TENANT_ID);
   });
@@ -42,6 +42,6 @@ describe("SQL injection safety — ProductService.listProducts", () => {
 
     await service.listProducts(TENANT_ID, { category: payload, lowStockOnly: false, page: 1, pageSize: 20 });
 
-    expect((repo.list as ReturnType<typeof vi.fn>).mock.calls[0][0].category).toBe(payload);
+    expect((repo.list as ReturnType<typeof vi.fn>).mock.calls[0]![0].category).toBe(payload);
   });
 });

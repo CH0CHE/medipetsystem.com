@@ -46,7 +46,7 @@ describe("OwnerService.createOwner", () => {
       "actor-1",
     );
 
-    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.documentId).toBe("1234-5678");
     expect(call.phone).toBe("5555-5555");
   });

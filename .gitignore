@@ -31,6 +31,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude skills (local tooling, not project source)
+.claude/*
+.claude/skills/*/scripts/__pycache__/
+.claude/skills/.venv/
+security-reports/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

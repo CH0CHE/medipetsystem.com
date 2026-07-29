@@ -55,7 +55,7 @@ describe("MedicalRecordService.createEntry", () => {
       nextDueDate: "2027-01-15",
     });
 
-    const call = (repo.createEntry as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.createEntry as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.vaccineName).toBe("Antirrábica");
     expect(call.nextDueDate).toBeInstanceOf(Date);
     expect(call.diagnosis).toBeNull();
@@ -74,7 +74,7 @@ describe("MedicalRecordService.createEntry", () => {
       nextDueDate: "",
     });
 
-    const call = (repo.createEntry as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.createEntry as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.nextDueDate).toBeNull();
   });
 });

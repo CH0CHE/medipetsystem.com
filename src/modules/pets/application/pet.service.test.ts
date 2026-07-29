@@ -64,7 +64,7 @@ describe("PetService.createPet", () => {
       "actor-1",
     );
 
-    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.create as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.birthDate).toBeNull();
   });
 });

@@ -28,7 +28,7 @@ describe("SQL injection safety — OwnerService.listOwners", () => {
       expect.objectContaining({ tenantId: TENANT_ID, search: SQLI_PAYLOAD }),
     );
 
-    const call = (repo.list as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (repo.list as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.search).toBe(SQLI_PAYLOAD);
     expect(typeof call.search).toBe("string");
   });
@@ -42,6 +42,6 @@ describe("SQL injection safety — OwnerService.listOwners", () => {
     // como string libre, el repositorio debe seguir tratándolo como dato, no como SQL.
     await service.listOwners(TENANT_ID, { search: payload, page: 1, pageSize: 20 });
 
-    expect((repo.list as ReturnType<typeof vi.fn>).mock.calls[0][0].search).toBe(payload);
+    expect((repo.list as ReturnType<typeof vi.fn>).mock.calls[0]![0].search).toBe(payload);
   });
 });

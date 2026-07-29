@@ -184,12 +184,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/login",
-    "/change-password",
-    "/dashboard/:path*",
-    "/platform-admin/login",
-    "/platform-admin/dashboard/:path*",
-    "/api/:path*",
-  ],
+  // Catch-all (salvo assets estáticos de _next) para que el CSP y el resto de
+  // los headers de respond() cubran también el Portal Público (landing, blog,
+  // FAQ, planes, contacto, demo) — antes el matcher solo cubría rutas
+  // autenticadas + /api/, dejando sin CSP la superficie pública sin auth,
+  // que es la más expuesta a XSS (posts de blog, formulario de leads).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
